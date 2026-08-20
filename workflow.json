@@ -1,0 +1,977 @@
+{
+  "name": "n8n Invoice Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "labelIds": []
+        },
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -336,
+        -48
+      ],
+      "id": "8d116fcc-9ccd-43c9-b428-0f8b882dbf61",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "QgNpwXaff95sMthI",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "066131ec-2707-486b-8601-4b23e6514dcb",
+              "leftValue": "={{ $json.headers.subject }}",
+              "rightValue": "Invoice",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "97d07fec-bd12-4759-b5ec-fc2b0e713732",
+              "leftValue": "={{ $json.text }}",
+              "rightValue": "Invoice",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "4eb19ee8-6435-4fbe-ac89-6ac8181756c9",
+              "leftValue": "={{ $binary.attachment_0.fileName }}",
+              "rightValue": "Invoice",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        -160,
+        -48
+      ],
+      "id": "5fc2e65a-ab4b-490c-a885-b5cb48dac1bd",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1MaC2deGjhN3rAoqQsd_ctrbV3-d5RMclvO_7EieKmEI",
+          "mode": "list",
+          "cachedResultName": "ERP Invoice Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MaC2deGjhN3rAoqQsd_ctrbV3-d5RMclvO_7EieKmEI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "PO",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MaC2deGjhN3rAoqQsd_ctrbV3-d5RMclvO_7EieKmEI/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "PO Number",
+              "lookupValue": "={{ $json.output[0].content[0].text.po_number }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        992,
+        -48
+      ],
+      "id": "c5893762-211c-41a4-9d53-36d0d92a82ef",
+      "name": "po",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "r79qf3r0jKbwrQBX",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b885a433-56b2-498e-a2c6-c744fc01b987",
+              "leftValue": "={{ Number(String($json[\"Received Qty\"]).replace(/[^0-9.]/g, \"\")) }}",
+              "rightValue": "={{ Number(String($('JSON').item.json.output[0].content[0].text.quantity).replace(/[^0-9.]/g, \"\")) }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "1beaebe4-c9fb-4005-bfec-10fb65e2812d",
+              "leftValue": "={{ Number(String($('po').item.json[\"Approved Amount\"]).replace(/[^0-9.]/g, \"\")) }}",
+              "rightValue": "={{ Number(String($('JSON').item.json.output[0].content[0].text.total_amount).replace(/[^0-9.]/g, \"\")) }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "ab88d08a-ef59-4778-b954-cf87056d4ada",
+              "leftValue": "={{ Number(String($('po').item.json[\"Ordered Qty\"]).replace(/[^0-9.]/g, \"\")) }}",
+              "rightValue": "={{ Number(String($('JSON').item.json.output[0].content[0].text.quantity).replace(/[^0-9.]/g, \"\")) }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "8e0c6bf0-dff6-4a98-b1bf-56682bf0b327",
+              "leftValue": "={{ $json[\"Inspection Status\"] }}",
+              "rightValue": "Passed",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1344,
+        -48
+      ],
+      "id": "c667f5a9-d3b5-4a01-9ca1-ae65ddb3b9bb",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "C:/tmp/current_invoice.pdf",
+        "dataPropertyName": "attachment_0",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        16,
+        -48
+      ],
+      "id": "2017d4ff-b51f-4063-ba0d-15b501161f3f",
+      "name": "Save Temp PDF"
+    },
+    {
+      "parameters": {
+        "command": "=\"C:\\Users\\nakul\\Downloads\\Release-26.02.0-0\\poppler-26.02.0\\Library\\bin\\pdftoppm.exe\" -png -r 150 C:\\tmp\\current_invoice.pdf C:\\tmp\\current_page"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        176,
+        -48
+      ],
+      "id": "0acc0523-be11-44b2-bfd9-eafe0bb23c55",
+      "name": "Convert PDF to PNG"
+    },
+    {
+      "parameters": {
+        "fileSelector": "=C:/tmp/current_page-*.png",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        336,
+        -48
+      ],
+      "id": "86ca8e0e-0b78-4d80-a646-76bd5e9c75bb",
+      "name": "Load PNGs into n8n"
+    },
+    {
+      "parameters": {
+        "command": "=cmd /c del /Q C:\\tmp\\current_invoice.pdf C:\\tmp\\current_page-*.png"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1984,
+        -80
+      ],
+      "id": "6e244548-968a-4af3-8f25-6e7e78f3e1e5",
+      "name": "Automatic Cleanup"
+    },
+    {
+      "parameters": {
+        "command": "=cmd /c del /Q C:\\tmp\\current_invoice.pdf C:\\tmp\\current_page-*.png"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        96
+      ],
+      "id": "1cc724ad-e6c7-4faa-a0c9-748a54a6e761",
+      "name": "Automatic Cleanup1"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "D0BR8K33JKG",
+          "mode": "id"
+        },
+        "text": "=⚠️ Flagged for Human Review!\n• Vendor: {{ $('JSON').item.json.output[0].content[0].text.vendor_name }}\n• Invoice Number: {{ $('JSON').item.json.output[0].content[0].text.invoice_number }}\n• PO Number: {{ $('po').item.json[\"PO Number\"] }}\n• GR Number: {{ $('GR').item.json[\"GR Number\"] }}\n• Status: Failed\n• Discrepancy Reason: {{\n  (() => {\n    const cleanNum = (v) => Number(String(v).replace(/[^0-9.]/g, \"\"));\n    const fmt = (n) => n.toLocaleString(\"en-IN\");\n\n    const raw = $('JSON').item.json.output[0].content[0].text;\n    const ai = (typeof raw === \"string\") ? JSON.parse(raw) : raw;\n\n    const poAmt  = cleanNum($('po').item.json[\"Approved Amount\"]);\n    const ordQty = cleanNum($('po').item.json[\"Ordered Qty\"]);\n    const grQty  = cleanNum($('GR').item.json[\"Received Qty\"]);\n    const insp   = String($('GR').item.json[\"Inspection Status\"] || \"\").trim().toLowerCase();\n\n    const invAmt = cleanNum(ai.total_amount);\n    const invQty = cleanNum(ai.quantity);\n\n    const reasons = [];\n    if (poAmt !== invAmt)  reasons.push(\"PO Approved Amount (\" + fmt(poAmt) + \") does not match Invoice Total Amount (\" + fmt(invAmt) + \")\");\n    if (grQty !== invQty)  reasons.push(\"GR Received Quantity (\" + fmt(grQty) + \") does not match Invoice Quantity (\" + fmt(invQty) + \")\");\n    if (ordQty !== invQty) reasons.push(\"PO Ordered Quantity (\" + fmt(ordQty) + \") does not match Invoice Quantity (\" + fmt(invQty) + \")\");\n    if (insp !== \"passed\") reasons.push(\"Inspection Status is '\" + insp.toUpperCase() + \"' (not Passed)\");\n\n    return reasons.length\n      ? reasons.join(\" AND \") + \".\"\n      : \"Discrepancy detected during 3-way matching (check vendor / invoice details).\";\n  })()\n}}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        1600,
+        96
+      ],
+      "id": "b3956ceb-ec4f-473a-a4be-fefc2b69db73",
+      "name": "⚠️ Flagged for Human Review!",
+      "webhookId": "89649e0d-9605-486a-93a0-92c62e388647",
+      "credentials": {
+        "slackApi": {
+          "id": "pt11w0wSTf89gXy4",
+          "name": "Slack account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "PaddleOCR-VL-1.6",
+          "mode": "id"
+        },
+        "text": "You are an expert AI invoice parsing assistant. Your sole task is to extract structured financial data from photo",
+        "inputType": "base64",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        528,
+        -48
+      ],
+      "id": "b0b01434-f913-40c1-89bd-052e08ee7c96",
+      "name": "OCR model",
+      "credentials": {
+        "openAiApi": {
+          "id": "h86rOwvDqVjfWzmr",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1MaC2deGjhN3rAoqQsd_ctrbV3-d5RMclvO_7EieKmEI",
+          "mode": "list",
+          "cachedResultName": "ERP Invoice Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MaC2deGjhN3rAoqQsd_ctrbV3-d5RMclvO_7EieKmEI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 434950199,
+          "mode": "list",
+          "cachedResultName": "Invoice",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MaC2deGjhN3rAoqQsd_ctrbV3-d5RMclvO_7EieKmEI/edit#gid=434950199"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Invoice Number": "={{ $('JSON').item.json.output[0].content[0].text.invoice_number }}",
+            "3 Way Match Status": "={{ $json[\"Inspection Status\"] }}",
+            "Processed At": "={{ $now.toFormat('yyyy-MM-dd ,hh:mm a') }}",
+            "PO Number": "={{ $('JSON').item.json.output[0].content[0].text.po_number }}",
+            "Quantity": "={{ $('JSON').item.json.output[0].content[0].text.quantity }}",
+            "Billed Amount": "={{ $('JSON').item.json.output[0].content[0].text.total_amount }}",
+            "Rate": "={{ $('JSON').item.json.output[0].content[0].text.rate }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Invoice",
+              "displayName": "Invoice",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Invoice Number",
+              "displayName": "Invoice Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "PO Number",
+              "displayName": "PO Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Quantity",
+              "displayName": "Quantity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Rate",
+              "displayName": "Rate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Billed Amount",
+              "displayName": "Billed Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "3 Way Match Status",
+              "displayName": "3 Way Match Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Error Reason",
+              "displayName": "Error Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Processed At",
+              "displayName": "Processed At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1600,
+        -80
+      ],
+      "id": "7f48ae81-0584-49e3-87f2-5811e7261af8",
+      "name": "Append row in invoice",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "r79qf3r0jKbwrQBX",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/Qwen3.5-4B-Q4_K_S.gguf",
+          "mode": "list"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "=user",
+              "content": "=You are an expert invoice data parser. Extract structured financial data from the invoice text below.\n\nCRITICAL RULES:\n1. Output ONLY a valid JSON object.\n2. Do NOT write any thinking process, reasoning, or explanations.\n3. Do NOT wrap the output in markdown fences (do not write ```json or ```).\n4. Amounts and quantities must be numeric floats/integers without currency symbols or commas (e.g., 1250 instead of \"$1,250.00\").\n\nREQUIRED JSON FORMAT:\n{\n  \"invoice_number\": \"string or null\",\n  \"po_number\": \"string or null\",\n  \"vendor_name\": \"string or null\",\n  \"quantity\": number or null,\n  \"rate\": number or null,\n  \"Amount\": number or null,\n  \"total_amount\": number or null\n}\n\nINVOICE TEXT:\n{{ $json['0'].content[0].text }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "textFormat": {
+            "textOptions": {
+              "type": "json_object",
+              "verbosity": "low"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        704,
+        -48
+      ],
+      "id": "a423024d-9483-4dd9-a537-02ddbd72a21d",
+      "name": "JSON",
+      "credentials": {
+        "openAiApi": {
+          "id": "eXmrqdUGUmsM4SS3",
+          "name": "OpenAI account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('JSON').item.json.output[0].content[0].text.quantity }}",
+                    "rightValue": "={{ $json[\"Received Qty\"] }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEquals"
+                    },
+                    "id": "3f938d18-5d3f-4f52-84ff-06ac340117e8"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "=Good received {{ $('JSON').item.json.output[0].content[0].text.quantity }} is not equal to Invoice quantity {{ $json[\"Received Qty\"] }}"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "d0ac319d-e407-4e32-ab1a-749919fedff7",
+                    "leftValue": "={{ $('JSON').item.json.output[0].content[0].text.quantity }}",
+                    "rightValue": "={{ $json[\"Received Qty\"] }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "84a754b1-a58c-40be-baec-2796723a71f6",
+                    "leftValue": "={{ $('po').item.json[\"Approved Amount\"] }}",
+                    "rightValue": "={{ $('JSON').item.json.output[0].content[0].text.total_amount }}",
+                    "operator": {
+                      "type": "dateTime",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "=Purchase Order {{ $('po').item.json[\"Approved Amount\"] }} is not equal to Invoice total amount {{ $('JSON').item.json.output[0].content[0].text.total_amount }}"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c37c924b-94c6-49ef-9814-41f055f985eb",
+                    "leftValue": "={{ $('JSON').item.json.output[0].content[0].text.total_amount }}",
+                    "rightValue": "={{ $('JSON').item.json.output[0].content[0].text.total_amount }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        2704,
+        1200
+      ],
+      "id": "79ff8114-e4f5-4de8-80dc-f874060cc261",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1MaC2deGjhN3rAoqQsd_ctrbV3-d5RMclvO_7EieKmEI",
+          "mode": "list",
+          "cachedResultName": "ERP Invoice Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MaC2deGjhN3rAoqQsd_ctrbV3-d5RMclvO_7EieKmEI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 434950199,
+          "mode": "list",
+          "cachedResultName": "Invoice",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MaC2deGjhN3rAoqQsd_ctrbV3-d5RMclvO_7EieKmEI/edit#gid=434950199"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Invoice Number": "={{ $('JSON').item.json.output[0].content[0].text.invoice_number }}",
+            "Processed At": "={{ $now.toFormat('yyyy-MM-dd ,hh:mm a') }}",
+            "PO Number": "={{ $('JSON').item.json.output[0].content[0].text.po_number }}",
+            "Quantity": "={{ $('JSON').item.json.output[0].content[0].text.quantity }}",
+            "Billed Amount": "={{ $('JSON').item.json.output[0].content[0].text.total_amount }}",
+            "Rate": "={{ $('JSON').item.json.output[0].content[0].text.rate }}",
+            "3 Way Match Status": "Failed",
+            "Error Reason": "={{\n  (() => {\n    const poAmt = Number($node[\"po\"].json[\"Approved Amount\"].toString().replace(/,/g, ''));\n    const invAmt = Number($('JSON').item.json.output[0].content[0].text.total_amount);\n    const grQty = Number($node[\"GR\"].json[\"Received Qty\"]);\n    const invQty = Number($('JSON').item.json.output[0].content[0].text.quantity);\n\n    const poFailed = poAmt !== invAmt;\n    const grFailed = grQty !== invQty;\n\n    if (poFailed && grFailed) {\n      return \"BOTH PO Amount (PO: \" + poAmt + \" vs Inv: \" + invAmt + \") AND GR Quantity (GR: \" + grQty + \" vs Inv: \" + invQty + \") do not match.\";\n    } else if (poFailed) {\n      return \"PO Approved Amount (\" + poAmt + \") does not match Invoice Total Amount (\" + invAmt + \").\";\n    } else if (grFailed) {\n      return \"GR Quantity (\" + grQty + \") does not match Invoice Quantity (\" + invQty + \").\";\n    } else {\n      return \"Discrepancy detected during 3-way matching.\";\n    }\n  })()\n}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Invoice",
+              "displayName": "Invoice",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Invoice Number",
+              "displayName": "Invoice Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "PO Number",
+              "displayName": "PO Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Quantity",
+              "displayName": "Quantity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Rate",
+              "displayName": "Rate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Billed Amount",
+              "displayName": "Billed Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "3 Way Match Status",
+              "displayName": "3 Way Match Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Error Reason",
+              "displayName": "Error Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Processed At",
+              "displayName": "Processed At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1776,
+        96
+      ],
+      "id": "26c84967-f800-40aa-9b24-9df1316f3f68",
+      "name": "Append row in invoice1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "r79qf3r0jKbwrQBX",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1MaC2deGjhN3rAoqQsd_ctrbV3-d5RMclvO_7EieKmEI",
+          "mode": "list",
+          "cachedResultName": "ERP Invoice Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MaC2deGjhN3rAoqQsd_ctrbV3-d5RMclvO_7EieKmEI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1655765043,
+          "mode": "list",
+          "cachedResultName": "GR",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MaC2deGjhN3rAoqQsd_ctrbV3-d5RMclvO_7EieKmEI/edit#gid=1655765043"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "PO Number",
+              "lookupValue": "={{ $json[\"PO Number\"] }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1152,
+        -48
+      ],
+      "id": "1a694e23-954c-4f4f-8d2b-3e49dbba88cd",
+      "name": "GR",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "r79qf3r0jKbwrQBX",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Save Temp PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Append row in invoice",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "⚠️ Flagged for Human Review!",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "po": {
+      "main": [
+        [
+          {
+            "node": "GR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Temp PDF": {
+      "main": [
+        [
+          {
+            "node": "Convert PDF to PNG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⚠️ Flagged for Human Review!": {
+      "main": [
+        [
+          {
+            "node": "Append row in invoice1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in invoice": {
+      "main": [
+        [
+          {
+            "node": "Automatic Cleanup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OCR model": {
+      "main": [
+        [
+          {
+            "node": "JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert PDF to PNG": {
+      "main": [
+        [
+          {
+            "node": "Load PNGs into n8n",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load PNGs into n8n": {
+      "main": [
+        [
+          {
+            "node": "OCR model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON": {
+      "main": [
+        [
+          {
+            "node": "po",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [],
+        [],
+        [],
+        []
+      ]
+    },
+    "Append row in invoice1": {
+      "main": [
+        [
+          {
+            "node": "Automatic Cleanup1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GR": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "nTWsRoaxzSAK06E9",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "4b80d4e2-1350-4602-bf45-3959562a54dc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "abdd46bea71b01a6fbb047712630b655899ffd73af946b4a1a8a66f9a984b5cf"
+  },
+  "id": "CWZOBvvioCYpseoZ",
+  "tags": []
+}
