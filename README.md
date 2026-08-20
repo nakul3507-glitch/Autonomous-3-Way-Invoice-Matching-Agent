@@ -9,6 +9,9 @@ Runs **100% locally** with zero cloud API token costs and complete financial dat
 ## 📺 Live Video Demo
 https://www.loom.com/share/8e9d59483a294ed9bf1f554bbd27edf9
 
+<img width="426" height="240" alt="invoice" src="https://github.com/user-attachments/assets/75c12bfc-7a24-4d55-b88b-76f515efb942" />
+
+
 
 
 ---
